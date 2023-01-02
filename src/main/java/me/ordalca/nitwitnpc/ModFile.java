@@ -7,11 +7,16 @@ import com.pixelmonmod.pixelmon.entities.npcs.registry.GeneralNPCData;
 import com.pixelmonmod.pixelmon.entities.npcs.registry.ServerNPCRegistry;
 import com.pixelmonmod.pixelmon.items.heldItems.MailItem;
 import me.ordalca.nitwitnpc.init.EnhancedVillagerReplacement;
+import net.minecraft.entity.Pose;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.merchant.villager.VillagerEntity;
 import net.minecraft.entity.merchant.villager.VillagerProfession;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.potion.Effect;
+import net.minecraft.potion.EffectInstance;
+import net.minecraft.potion.Effects;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.concurrent.ThreadTaskExecutor;
 import net.minecraft.util.concurrent.TickDelayedTask;
 import net.minecraftforge.common.MinecraftForge;
@@ -64,11 +69,8 @@ public class ModFile {
                 usedItem.setCount(count-1);
                 createQuestGiverFromVillager(villager, event);
 
-                villager.releasePoi(MemoryModuleType.HOME);
-                villager.releasePoi(MemoryModuleType.JOB_SITE);
-                villager.releasePoi(MemoryModuleType.POTENTIAL_JOB_SITE);
-                villager.releasePoi(MemoryModuleType.MEETING_POINT);
-                villager.remove();
+                //kill villager by dropping them into the void (avoiding conflicts with other mods)
+                villager.setPos(villager.getX(), -10, villager.getZ());
             }
         }
     }
