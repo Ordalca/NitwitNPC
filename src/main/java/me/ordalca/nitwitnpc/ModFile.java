@@ -1,30 +1,9 @@
 package me.ordalca.nitwitnpc;
 
 import com.pixelmonmod.pixelmon.api.replacement.ReplacementLogicRegistry;
-import com.pixelmonmod.pixelmon.entities.SpawnLocationType;
-import com.pixelmonmod.pixelmon.entities.npcs.NPCQuestGiver;
-import com.pixelmonmod.pixelmon.entities.npcs.registry.GeneralNPCData;
-import com.pixelmonmod.pixelmon.entities.npcs.registry.ServerNPCRegistry;
-import com.pixelmonmod.pixelmon.items.heldItems.MailItem;
-import me.ordalca.nitwitnpc.init.EnhancedVillagerReplacement;
-import net.minecraft.entity.Pose;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.merchant.villager.VillagerEntity;
-import net.minecraft.entity.merchant.villager.VillagerProfession;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.concurrent.ThreadTaskExecutor;
-import net.minecraft.util.concurrent.TickDelayedTask;
+import me.ordalca.nitwitnpc.network.NPCNetwork;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.LogicalSidedProvider;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -45,51 +24,12 @@ public class ModFile {
 
         final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(this::setup);
-        MinecraftForge.EVENT_BUS.register(this);
-        ReplacementLogicRegistry.register(EnhancedVillagerReplacement::new);
     }
 
     private void setup(final FMLCommonSetupEvent event) {
         LOGGER.info("Loaded NitwitNPC mod");
-    }
-
-    @SubscribeEvent
-    public void fireVillager(PlayerInteractEvent.EntityInteractSpecific event)
-    {
-        if(event.getTarget() instanceof VillagerEntity)
-        {
-            VillagerEntity villager = (VillagerEntity) event.getTarget();
-            if(villager == null || villager.getVillagerData().getProfession() != VillagerProfession.NONE) {
-                return;
-            }
-            PlayerEntity player = event.getPlayer();
-            ItemStack usedItem = player.getItemInHand(event.getHand());
-            if (usedItem != null && usedItem.getItem() instanceof MailItem) {
-                int count = usedItem.getCount();
-                usedItem.setCount(count-1);
-                createQuestGiverFromVillager(villager, event);
-
-                //kill villager by dropping them into the void (avoiding conflicts with other mods)
-                villager.setPos(villager.getX(), -10, villager.getZ());
-            }
-        }
-    }
-
-    public void createQuestGiverFromVillager(VillagerEntity villager, PlayerInteractEvent event) {
-        NPCQuestGiver npc = new NPCQuestGiver(event.getWorld());
-        GeneralNPCData data = ServerNPCRegistry.villagers.getRandom();
-        npc.init(data);
-        npc.setCustomSteveTexture(data.getRandomTexture());
-        npc.moveTo(villager.getX(), villager.getY(), villager.getZ(), villager.yRot, villager.xRot);
-        npc.setProfession(0);
-        npc.initVilagerAI();
-        npc.npcLocation = SpawnLocationType.LAND_VILLAGER;
-        npc.setPersistenceRequired();
-
-        ThreadTaskExecutor<Runnable> executor = (ThreadTaskExecutor) LogicalSidedProvider.WORKQUEUE.get(LogicalSide.SERVER);
-        executor.tell(new TickDelayedTask(0, () -> {
-            event.getWorld().addFreshEntity(npc);
-        }));
+        ReplacementLogicRegistry.register(EnhancedVillagerReplacement::new);
+        NPCNetwork.init();
     }
 
     public static ModFile getInstance() {
